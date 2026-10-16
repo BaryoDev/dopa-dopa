@@ -20,7 +20,7 @@ This game serves as a **complete showcase** of [DopamineJS](https://github.com/B
 ## 🚀 Quick Start
 
 ### Play Online
-[Play Dopa-Dopa Now!](#) *(coming soon)*
+[Play Dopa-Dopa Now!](https://playground.baryo.dev/dopadopa/)
 
 ### Run Locally
 
