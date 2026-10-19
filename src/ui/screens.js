@@ -1,3 +1,6 @@
+import { medalFor, medalElement } from './medals.js';
+import { phaseFor } from '../game/palette.js';
+
 const OVER_GUARD_MS = 600;
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
@@ -40,6 +43,8 @@ export function svgElement(markup) {
 
 export const FLAME_ICON = `<svg xmlns="${SVG_NS}" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c1 4 5 6 5 11a5 5 0 0 1-10 0c0-2 1-3.500 2-4.500 0 2 1 3 2 3 0-4-1-6 1-9.500z"/></svg>`;
 
+const MASCOT = `<svg xmlns="${SVG_NS}" viewBox="0 0 96 80" aria-hidden="true"><g stroke="#3a2416" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"><path d="M40 66l-3 10h7M54 66l-1 10h7" fill="none" stroke="#f08c00"/><circle cx="54" cy="16" r="5" fill="#f03e3e"/><circle cx="61" cy="14" r="5.500" fill="#f03e3e"/><circle cx="67" cy="18" r="4.500" fill="#f03e3e"/><ellipse cx="18" cy="38" rx="8" ry="10" fill="#ffd43b"/><ellipse cx="44" cy="48" rx="28" ry="22" fill="#ffd43b"/><circle cx="60" cy="32" r="16" fill="#ffd43b"/><path d="M74 28l14 6-14 6z" fill="#ff922b"/><circle cx="64" cy="28" r="6.500" fill="#fff" stroke-width="2.500"/><ellipse cx="36" cy="50" rx="13" ry="9" fill="#fab005" stroke-width="3"/></g><ellipse cx="44" cy="56" rx="16" ry="8" fill="#fff3bf"/><circle cx="66" cy="28" r="3.500" fill="#3a2416"/><circle cx="67.200" cy="26.600" r="1.200" fill="#fff"/></svg>`;
+
 const MUTE_ON = `<svg xmlns="${SVG_NS}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 9a4 4 0 0 1 0 6"/><path d="M18.500 6.500a8 8 0 0 1 0 11"/></svg>`;
 const MUTE_OFF = `<svg xmlns="${SVG_NS}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9l5 6"/><path d="M22 9l-5 6"/></svg>`;
 
@@ -67,8 +72,9 @@ export function createScreens(root, handlers) {
   const bestStart = el('span', { id: 'best', text: '0' });
   const startBtn = el('button', { type: 'submit', class: 'btn', text: 'Start' });
   const startForm = el('form', { class: 'box', 'data-ui': '' },
+    el('div', { class: 'mascot' }, ...[svgElement(MASCOT)].filter(Boolean)),
     el('h1', { text: 'Dopa-Dopa' }),
-    el('p', { class: 'hint', text: 'Tap, click, Space or Enter to jump.' }),
+    el('p', { class: 'hint', text: 'Jump the crates, rocks and bushes. Tap, click, Space or Enter.' }),
     el('label', { for: 'player-name', text: 'Your name' }),
     nameInput,
     el('p', { class: 'best-line' }, 'Best ', bestStart),
@@ -77,10 +83,13 @@ export function createScreens(root, handlers) {
   const startScreen = el('div', { id: 'screen-start', class: 'screen' }, startForm);
 
   const hud = el('div', { id: 'hud-score', class: 'hud', text: '0', 'aria-live': 'off' });
+  const jumpHint = el('div', { class: 'jump-hint', text: 'Tap to jump' });
 
   const finalScore = el('span', { id: 'final-score', text: '0' });
   const bestOver = el('span', { id: 'best-score', text: '0' });
   const newBest = el('p', { class: 'new-best', text: 'New best' });
+  const medalSlot = el('div', { class: 'medal', role: 'img' });
+  const medalName = el('p', { class: 'medal-name' });
   const boardBody = el('tbody');
   const board = el('table', { id: 'board', class: 'board' },
     el('thead', {}, el('tr', {}, el('th', { text: '#' }), el('th', { text: 'Name' }), el('th', { text: 'Score' }))),
@@ -89,6 +98,8 @@ export function createScreens(root, handlers) {
   const againBtn = el('button', { type: 'button', class: 'btn', text: 'Run again' });
   const overBox = el('div', { class: 'box', 'data-ui': '' },
     el('h1', { text: 'Caught' }),
+    medalSlot,
+    medalName,
     el('p', { class: 'score-line' }, 'Score ', finalScore),
     el('p', { class: 'best-line' }, 'Best ', bestOver),
     newBest,
@@ -106,14 +117,18 @@ export function createScreens(root, handlers) {
   const muteBtn = el('button', { type: 'button', id: 'mute', class: 'icon-btn', 'data-ui': '' });
   const toasts = el('div', { class: 'toasts', 'aria-live': 'polite', role: 'status' });
 
-  root.append(hud, startScreen, overScreen, pausedScreen, muteBtn, toasts);
+  root.append(hud, jumpHint, startScreen, overScreen, pausedScreen, muteBtn, toasts);
 
   const show = (node, on) => {
     node.hidden = !on;
   };
   show(hud, false);
+  show(jumpHint, false);
   show(overScreen, false);
   show(pausedScreen, false);
+  show(medalSlot, false);
+  show(medalName, false);
+  document.documentElement.dataset.phase = 'morning';
 
   let overShownAt = 0;
   const overGuardClear = () => performance.now() - overShownAt >= OVER_GUARD_MS;
@@ -165,6 +180,7 @@ export function createScreens(root, handlers) {
       show(startScreen, true);
       show(overScreen, false);
       show(hud, false);
+      show(jumpHint, false);
     },
     showPlaying() {
       show(startScreen, false);
@@ -172,16 +188,35 @@ export function createScreens(root, handlers) {
       show(pausedScreen, false);
       hud.textContent = '0';
       show(hud, true);
+      show(jumpHint, true);
+      document.documentElement.dataset.phase = 'morning';
     },
     showScore(n) {
-      hud.textContent = String(n);
+      if (hud.textContent !== String(n)) {
+        hud.textContent = String(n);
+        hud.classList.remove('bump');
+        void hud.offsetWidth;
+        hud.classList.add('bump');
+      }
+      document.documentElement.dataset.phase = phaseFor(n);
+      if (n > 0) show(jumpHint, false);
     },
     showOver(score, best, entries, run, previousBest) {
       finalScore.textContent = String(score);
       bestOver.textContent = String(best);
       show(newBest, score > 0 && score > previousBest);
+      const medal = medalFor(score);
+      const art = medal ? medalElement(medal) : null;
+      medalSlot.replaceChildren(...(art ? [art] : []));
+      medalSlot.dataset.medal = medal ?? '';
+      const label = medal ? `${medal[0].toUpperCase()}${medal.slice(1)} medal` : '';
+      medalSlot.setAttribute('aria-label', label);
+      medalName.textContent = label;
+      show(medalSlot, Boolean(art));
+      show(medalName, Boolean(art));
       renderBoard(entries, run);
       show(hud, false);
+      show(jumpHint, false);
       show(pausedScreen, false);
       show(overScreen, true);
       overShownAt = performance.now();

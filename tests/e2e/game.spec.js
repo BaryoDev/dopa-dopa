@@ -200,3 +200,43 @@ test('no console errors and no requests to other hosts', async ({ page }) => {
   expect(errors).toEqual([]);
   expect(offsite).toEqual([]);
 });
+
+async function scoreTo(page, score) {
+  await page.evaluate((n) => {
+    const w = window.__dd.world;
+    w.score = n - 1;
+    w.nextSpawnAt = w.distance + 1e6;
+    w.obstacles = [{ type: 'crate', x: w.chicken.x - 60, w: 45, h: 45, passed: false }];
+  }, score);
+  await expect(page.locator('#hud-score')).toHaveText(String(score));
+}
+
+test('the phase follows the score and the Caught card shows a medal', async ({ page }) => {
+  await start(page);
+  await expect(page.locator('html')).toHaveAttribute('data-phase', 'morning');
+  await scoreTo(page, 10);
+  await expect(page.locator('html')).toHaveAttribute('data-phase', 'day');
+  await crash(page);
+  await expect(page.locator('#screen-over .medal')).toHaveAttribute('data-medal', 'bronze');
+  await expect(page.locator('#screen-over .medal')).toBeVisible();
+});
+
+test('no medal below 10', async ({ page }) => {
+  await start(page);
+  await scoreTo(page, 9);
+  await crash(page);
+  await expect(page.locator('#screen-over .medal')).toBeHidden();
+});
+
+test('the name is prefilled from the newest board entry', async ({ page }) => {
+  await page.addInitScript(() => {
+    if (sessionStorage.getItem('seeded')) return;
+    sessionStorage.setItem('seeded', '1');
+    localStorage.setItem('dopadopa.leaderboard', JSON.stringify([
+      { name: 'Old', score: 30, ts: 1000 },
+      { name: 'Newest', score: 5, ts: 2000 },
+    ]));
+  });
+  await open(page);
+  await expect(page.locator('#player-name')).toHaveValue('Newest');
+});
