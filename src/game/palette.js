@@ -72,7 +72,7 @@ export function colorsOf(phase) {
 
 const channel = (hex, i) => parseInt(hex.slice(1 + i * 2, 3 + i * 2), 16);
 
-function mix(a, b, t) {
+export function mix(a, b, t) {
   let out = '#';
   for (let i = 0; i < 3; i += 1) {
     const v = Math.round(channel(a, i) + (channel(b, i) - channel(a, i)) * t);

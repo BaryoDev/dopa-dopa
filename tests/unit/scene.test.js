@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { EventBus, GameObject, Component } from 'dopaminejs';
 import { RunScene, FIXED_DT } from '../../src/game/scene.js';
 import { createWorld } from '../../src/game/world.js';
@@ -92,7 +92,12 @@ describe('RunScene', () => {
     obj.addComponent(new Counter());
     scene.add(obj);
     frame(FIXED_DT);
-    scene.render(fakeCtx());
+    vi.stubGlobal('document', { createElement: () => ({ getContext: () => fakeCtx() }) });
+    try {
+      scene.render(fakeCtx());
+    } finally {
+      vi.unstubAllGlobals();
+    }
     expect(counts).toEqual({ update: 1, render: 1 });
   });
 
