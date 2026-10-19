@@ -12,7 +12,8 @@ import { createParticles } from './fx/particles.js';
 import { createFeedback } from './fx/feedback.js';
 import { shouldAct } from './ui/input.js';
 import { createScreens, svgElement, FLAME_ICON } from './ui/screens.js';
-import { applyTheme } from './theme.js';
+import { applyTheme, setPhaseTheme } from './theme.js';
+import { phaseFor } from './game/palette.js';
 import { guardedLocalStorage, asyncStore } from './platform/storage.js';
 import { migrateLegacy, markMigrated } from './migrate.js';
 import { addScore, sanitize, LEADERBOARD_KEY } from './leaderboard.js';
@@ -48,6 +49,12 @@ function hasWebGL() {
   }
 }
 
+function newestName(entries) {
+  if (entries.length === 0) return '';
+  const name = entries.reduce((a, b) => (b.ts > a.ts ? b : a)).name;
+  return name && name !== 'Player' && name !== 'Anonymous' ? name : '';
+}
+
 const newSeed = () => (Date.now() ^ (Math.random() * 2 ** 32)) >>> 0;
 
 async function boot() {
@@ -77,6 +84,7 @@ async function boot() {
   try {
     board = parseBoard(await store.getItem(LEADERBOARD_KEY));
     playerName = (await store.getItem(NAME_KEY)) ?? '';
+    if (!playerName) playerName = newestName(board);
   } catch (error) {
     console.warn('[dopa-dopa] could not read saved data', error);
   }
@@ -86,7 +94,7 @@ async function boot() {
 
   const view = { scale: 1, offsetX: 0, offsetY: 0, dpr: 1 };
   const canvas = document.getElementById('game');
-  const game = new Game({ canvas, width: window.innerWidth, height: window.innerHeight, backgroundColor: '#0d0d1a' });
+  const game = new Game({ canvas, width: window.innerWidth, height: window.innerHeight, backgroundColor: '#8fd3f4' });
   const { kernel } = game;
   if (hasWebGL()) {
     try {
@@ -144,6 +152,7 @@ async function boot() {
     scene.setWorld(world);
     steps = 0;
     mode = 'playing';
+    safe(() => setPhaseTheme(themeEngine, 'morning'));
     screens.showPlaying();
     scene.jump();
   }
@@ -189,18 +198,24 @@ async function boot() {
   function onEvents(events) {
     const { chicken } = world;
     const feet = RULES.groundY;
-    if (events.jumped) safe(() => sound.playJump());
+    if (events.jumped) {
+      safe(() => sound.playJump());
+      safe(() => particles.feathers(chicken.x, chicken.y));
+    }
     if (events.landed) safe(() => particles.landing(chicken.x, feet));
     if (world.phase === 'playing' && chicken.grounded && ++steps % DUST_EVERY === 0) {
       safe(() => particles.dust(chicken.x - RULES.chickenRadius, feet));
     }
     if (events.scored) {
       screens.showScore(world.score);
+      safe(() => setPhaseTheme(themeEngine, phaseFor(world.score)));
       safe(() => sound.playScore());
       if (world.score % 10 === 0) {
         safe(() => sound.playSuccess());
-        safe(() => feedback.milestone(world.width / 2, RULES.height / 3));
-        safe(() => particles.burst(world.width / 2, RULES.height / 3, '#FFD700'));
+        safe(() => feedback.milestone(world.width / 2, RULES.height / 3, world.score));
+        safe(() => particles.confetti(world.width / 2, RULES.height / 3));
+      } else if (events.close) {
+        safe(() => feedback.close(chicken.x, chicken.y - 50));
       }
     }
     if (events.faster) safe(() => feedback.faster(world.width / 2, RULES.height / 3 + 40));
