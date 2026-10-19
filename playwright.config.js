@@ -10,11 +10,11 @@ export default defineConfig({
   webServer: {
     command: 'npm run build && npx vite preview --port 4174 --strictPort',
     url: 'http://localhost:4174',
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
   },
   use: {
     baseURL: 'http://localhost:4174',
-    trace: 'on-first-retry',
+    trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },
   projects: [

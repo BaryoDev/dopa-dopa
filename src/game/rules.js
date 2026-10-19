@@ -51,7 +51,7 @@ export function isFasterAt(score) {
 }
 
 export function viewWidth(aspect) {
-  return RULES.height * clamp(aspect, RULES.minAspect, RULES.maxAspect);
+  return RULES.height * clamp(Number.isNaN(aspect) ? 1 : aspect, RULES.minAspect, RULES.maxAspect);
 }
 
 export function chickenX(width) {

@@ -35,6 +35,7 @@ src/
 npm install
 npm run dev
 npm test          # unit tests
+npx playwright install chromium   # once, for the browser tests
 npm run e2e       # browser tests at phone and desktop sizes
 npm run build     # static site in dist/
 ```

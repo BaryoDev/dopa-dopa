@@ -48,6 +48,11 @@ describe('rules', () => {
     expect(viewWidth(3)).toBe(1200);
   });
 
+  it('treats a 0 by 0 screen as square', () => {
+    expect(viewWidth(0 / 0)).toBe(600);
+    expect(viewWidth(Infinity)).toBe(1200);
+  });
+
   it('keeps the chicken on screen', () => {
     expect(chickenX(300)).toBe(60);
     expect(chickenX(600)).toBe(120);
