@@ -1,4 +1,4 @@
-const NOOP = { faster() {}, milestone() {}, oops() {} };
+const NOOP = { faster() {}, milestone() {}, levelUp() {}, oops() {} };
 const FONT = 'ui-monospace, Menlo, Consolas, monospace';
 
 export function createFeedback(kernel, { reduced }) {
@@ -9,6 +9,7 @@ export function createFeedback(kernel, { reduced }) {
     faster: (x, y) => show('faster', x, y, 'Faster', '#50fa7b'),
     // The plugin reads count with ||, so count 0 still fires confetti. A custom type has none.
     milestone: (x, y) => show(reduced ? 'custom' : 'milestone', x, y, 'Ten more', '#FFD700'),
+    levelUp: (x, y, level) => show(reduced ? 'custom' : 'levelup', x, y, `Level ${level}`, '#bd93f9'),
     oops: (x, y) => show('oops', x, y, 'Caught', '#FF4444'),
   };
 }
