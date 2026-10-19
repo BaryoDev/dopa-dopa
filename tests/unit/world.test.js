@@ -106,10 +106,43 @@ describe('world', () => {
       expect(e.crashed).toBe(true);
       expect(world.phase).toBe('over');
       expect(step(world, DT, { jump: true })).toEqual({
-        started: false, jumped: false, landed: false, scored: false, faster: false, crashed: false,
+        started: false, jumped: false, landed: false, scored: false, faster: false, crashed: false, close: false,
       });
     });
   }
+
+  function arcOver(apexClearance) {
+    const world = playing();
+    world.nextSpawnAt = Infinity;
+    const r = RULES.chickenRadius;
+    const crate = obstacle(world, 'crate', 0);
+    const half = (crate.w / 2 + r) / world.speed;
+    crate.x = world.chicken.x + crate.w / 2 + r;
+    const apexY = RULES.groundY - crate.h - apexClearance - r;
+    Object.assign(world.chicken, {
+      grounded: false,
+      vy: -RULES.gravity * half,
+      y: apexY + 0.5 * RULES.gravity * half * half,
+    });
+    world.obstacles = [crate];
+    const events = [];
+    for (let i = 0; i < 40; i++) events.push(step(world, DT, { jump: false }));
+    return { world, events };
+  }
+
+  it('a clear by a hair is a close one', () => {
+    const { world, events } = arcOver(18);
+    expect(events.some((e) => e.crashed)).toBe(false);
+    expect(world.score).toBe(1);
+    expect(events.filter((e) => e.close)).toHaveLength(1);
+    expect(events.find((e) => e.close).scored).toBe(true);
+  });
+
+  it('a clear with room to spare is not a close one', () => {
+    const { world, events } = arcOver(60);
+    expect(world.score).toBe(1);
+    expect(events.some((e) => e.close)).toBe(false);
+  });
 
   it('jumping over an obstacle at top speed is safe', () => {
     const world = createWorld({ width: 600, seed: 1 });

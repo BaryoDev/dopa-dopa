@@ -5,7 +5,7 @@ const TYPES = ['rock', 'crate', 'bush'];
 const STAND = RULES.groundY - RULES.chickenHalfHeight;
 
 const noEvents = () => ({
-  started: false, jumped: false, landed: false, scored: false, faster: false, crashed: false,
+  started: false, jumped: false, landed: false, scored: false, faster: false, crashed: false, close: false,
 });
 
 export function createWorld({ width, seed }) {
@@ -103,11 +103,17 @@ export function step(world, dt, input) {
   world.obstacles = world.obstacles.filter((o) => o.x + o.w / 2 >= -50);
   while (world.distance >= world.nextSpawnAt) spawn(world);
 
+  const r = RULES.chickenRadius;
   for (const o of world.obstacles) {
-    if (o.passed || o.x + o.w / 2 >= chicken.x - RULES.chickenRadius) continue;
+    if (o.passed) continue;
+    if (chicken.x + r > o.x - o.w / 2 && chicken.x - r < o.x + o.w / 2) {
+      o.clear = Math.min(o.clear ?? Infinity, RULES.groundY - o.h - (chicken.y + r));
+    }
+    if (o.x + o.w / 2 >= chicken.x - r) continue;
     o.passed = true;
     world.score += 1;
     e.scored = true;
+    if ((o.clear ?? Infinity) < RULES.closeMargin) e.close = true;
     if (isFasterAt(world.score)) e.faster = true;
   }
   world.speed = speedFor(world.score);

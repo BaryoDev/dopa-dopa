@@ -14,6 +14,7 @@ export const RULES = {
   intervalPerPoint: 1 / 60,
   gapJitter: 0.3,
   firstGap: 450,
+  closeMargin: 12,
   minAspect: 0.5,
   maxAspect: 2.0,
 };
