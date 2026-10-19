@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { migrateLegacy, LEGACY_KEY, MIGRATED_KEY } from '../../src/migrate.js';
+import { migrateLegacy, markMigrated, LEGACY_KEY, MIGRATED_KEY } from '../../src/migrate.js';
 
 function syncStore(init = {}) {
   const data = new Map(Object.entries(init));
@@ -39,12 +39,22 @@ describe('migrateLegacy', () => {
     const backing = syncStore();
     const store = asyncOf(backing);
     expect(await migrateLegacy({ legacy, store })).toBe(37);
+    await markMigrated(store);
     expect(backing.data.get(MIGRATED_KEY)).toBe('1');
     expect(legacy.data.get(LEGACY_KEY)).toBe('37');
 
     legacy.reads.length = 0;
     expect(await migrateLegacy({ legacy, store })).toBe(0);
     expect(legacy.reads).toEqual([]);
+  });
+
+  it('the old best is offered again until the new save is marked done', async () => {
+    const legacy = syncStore({ [LEGACY_KEY]: '37' });
+    const backing = syncStore();
+    const store = asyncOf(backing);
+    expect(await migrateLegacy({ legacy, store })).toBe(37);
+    expect(backing.data.has(MIGRATED_KEY)).toBe(false);
+    expect(await migrateLegacy({ legacy, store })).toBe(37);
   });
 
   for (const [label, init] of [
@@ -55,11 +65,10 @@ describe('migrateLegacy', () => {
     it(`a ${label} old best gives 0`, async () => {
       const backing = syncStore();
       expect(await migrateLegacy({ legacy: syncStore(init), store: asyncOf(backing) })).toBe(0);
-      expect(backing.data.get(MIGRATED_KEY)).toBe('1');
     });
   }
 
-  it('a legacy read that throws gives 0 and still sets the flag', async () => {
+  it('a legacy read that throws gives 0', async () => {
     const legacy = {
       getItem() {
         throw new Error('blocked');
@@ -69,6 +78,5 @@ describe('migrateLegacy', () => {
     };
     const backing = syncStore();
     expect(await migrateLegacy({ legacy, store: asyncOf(backing) })).toBe(0);
-    expect(backing.data.get(MIGRATED_KEY)).toBe('1');
   });
 });

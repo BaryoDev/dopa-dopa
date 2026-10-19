@@ -10,10 +10,13 @@ function readBest(legacy) {
   }
 }
 
-/* Returns the old best once. The old key is read, never written or removed. */
+/* Returns the old best until markMigrated is called, which the caller does only once the best
+   is in the new save. The old key is read, never written or removed. */
 export async function migrateLegacy({ legacy, store }) {
   if ((await store.getItem(MIGRATED_KEY)) !== null) return 0;
-  const best = readBest(legacy);
+  return readBest(legacy);
+}
+
+export async function markMigrated(store) {
   await store.setItem(MIGRATED_KEY, '1');
-  return best;
 }

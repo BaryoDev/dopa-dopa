@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { createWorld, step, resize } from '../../src/game/world.js';
-import { RULES, speedFor, airtime, chickenX, obstacleSize } from '../../src/game/rules.js';
+import { RULES, speedFor, gapFor, airtime, chickenX, obstacleSize } from '../../src/game/rules.js';
 
 const DT = 1 / 60;
 const STAND = RULES.groundY - RULES.chickenHalfHeight;
@@ -164,12 +164,45 @@ describe('world', () => {
   it('resize keeps the run', () => {
     const world = playing();
     for (let i = 0; i < 100; i++) step(world, DT, { jump: world.chicken.grounded });
-    const xs = world.obstacles.map((o) => o.x);
+    const xs = world.obstacles.map((o) => o.x - world.chicken.x);
     resize(world, 900);
-    expect(world.obstacles.map((o) => o.x)).toEqual(xs);
+    expect(world.obstacles.map((o) => o.x - world.chicken.x)).toEqual(xs);
     expect(world.chicken.x).toBe(chickenX(900));
     expect(world.width).toBe(900);
     expect(world.phase).toBe('playing');
+  });
+
+  it('widening mid-run keeps each obstacle the same distance from the chicken', () => {
+    const world = playing(300);
+    world.nextSpawnAt = Infinity;
+    const ahead = 200 - world.chicken.x;
+    world.obstacles = [obstacle(world, 'crate', 200)];
+    resize(world, 1200);
+    expect(world.obstacles[0].x - world.chicken.x).toBeCloseTo(ahead, 6);
+    const e = step(world, DT, { jump: false });
+    expect(e.crashed).toBe(false);
+    expect(e.scored).toBe(false);
+  });
+
+  it('narrowing mid-run never spawns an obstacle in front of ones already coming', () => {
+    const world = playing(1200, 3);
+    world.score = 40;
+    for (let i = 0; i < 400 && world.obstacles.length < 3; i++) {
+      world.chicken.y = -10000;
+      world.chicken.vy = 0;
+      step(world, DT, { jump: false });
+    }
+    resize(world, 300);
+    for (let i = 0; i < 600; i++) {
+      world.chicken.y = -10000;
+      world.chicken.vy = 0;
+      world.score = 40;
+      step(world, DT, { jump: false });
+      const lefts = world.obstacles.map((o) => o.x - o.w / 2);
+      for (let j = 1; j < lefts.length; j++) {
+        expect(lefts[j] - lefts[j - 1]).toBeGreaterThanOrEqual(gapFor(40, 0) - speedFor(40) * DT);
+      }
+    }
   });
 
   it('the same seed gives the same run', () => {

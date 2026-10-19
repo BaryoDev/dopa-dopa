@@ -14,7 +14,7 @@ import { shouldAct } from './ui/input.js';
 import { createScreens, svgElement, FLAME_ICON } from './ui/screens.js';
 import { applyTheme } from './theme.js';
 import { guardedLocalStorage, asyncStore } from './platform/storage.js';
-import { migrateLegacy } from './migrate.js';
+import { migrateLegacy, markMigrated } from './migrate.js';
 import { addScore, sanitize, LEADERBOARD_KEY } from './leaderboard.js';
 import { createRewards, recordRun, GAME } from './progression/rewards.js';
 
@@ -67,6 +67,7 @@ async function boot() {
   let rewards = null;
   try {
     rewards = await createRewards(store, { legacyBest });
+    await markMigrated(store);
   } catch (error) {
     console.warn('[dopa-dopa] rewards unavailable', error);
   }

@@ -24,8 +24,10 @@ export function createWorld({ width, seed }) {
 }
 
 export function resize(world, width) {
+  const dx = chickenX(width) - world.chicken.x;
   world.width = width;
-  world.chicken.x = chickenX(width);
+  world.chicken.x += dx;
+  for (const o of world.obstacles) o.x += dx;
 }
 
 function jump(world) {
@@ -34,11 +36,17 @@ function jump(world) {
   world.buffer = 0;
 }
 
+/* After a resize to a narrower screen the obstacles already in flight sit past the new edge,
+   so a new one goes behind the last by its gap rather than at the edge. */
 function spawn(world) {
   const type = TYPES[Math.floor(world.rand() * TYPES.length)];
   const { w, h } = obstacleSize(type, world.rand(), world.rand());
-  world.obstacles.push({ type, x: world.width + w / 2 + 10, w, h, passed: false });
-  world.nextSpawnAt += gapFor(world.score, world.rand());
+  const gap = gapFor(world.score, world.rand());
+  const last = world.obstacles.at(-1);
+  const edge = world.width + 10 - (world.distance - world.nextSpawnAt);
+  const left = last ? Math.max(edge, last.x - last.w / 2 + (last.gap ?? 0)) : edge;
+  world.obstacles.push({ type, x: left + w / 2, w, h, gap, passed: false });
+  world.nextSpawnAt += gap;
 }
 
 function hits(chicken, o) {
