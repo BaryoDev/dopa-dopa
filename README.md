@@ -1,108 +1,42 @@
-# Dopa-Dopa 🐔
+# Dopa-Dopa
 
-> A chicken escaping hungry farmers! Built with DopamineJS
+A chicken runs along a farm road and jumps over rocks, crates and bushes. One input, jump. Your
+score is how many obstacles you clear.
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![DopamineJS](https://img.shields.io/badge/dopaminejs-2.0.0-ff6b35.svg)
+Play it at https://playground.baryo.dev/dopadopa/.
 
-## 🎮 About
+It is a showcase for [dopaminejs](https://github.com/BaryoDev/dopaminejs). The core runs the game
+loop, XP, levels, daily streak, achievements and the synthesized sound. Three plugins add WebGL
+particles, feedback text and confetti, and the retro theme.
 
-**Dopa-Dopa** is a Flappy Bird-style endless runner game featuring a brave chicken trying to escape from hungry farmers! Jump over obstacles like rocks, barns, and fences to survive as long as possible.
+## Controls
 
-This game serves as a **complete showcase** of [DopamineJS](https://github.com/BaryoDev/dopaminejs) v2.0.0, demonstrating:
-- ✅ Core game engine features
-- ✅ WebGL particle system (10,000+ particles)
-- ✅ Theme engine (retro theme)
-- ✅ Component-based architecture
-- ✅ Reward system integration
-- ✅ Touch and keyboard controls
+Tap, click, Space or Enter to start and to jump. The run pauses when the tab is hidden.
 
-## 🚀 Quick Start
+## Code
 
-### Play Online
-[Play Dopa-Dopa Now!](https://playground.baryo.dev/dopadopa/)
+```
+src/
+  main.js            boot: theme, storage, rewards, plugins, then the game
+  game/rules.js      pure: physics numbers and the difficulty curve
+  game/world.js      pure: step(world, dt, input) returns events
+  game/scene.js      fixed 1/60 s step, interpolated drawing
+  game/draw.js       canvas art
+  fx/                particles, feedback and shake, each with a no-op fallback
+  ui/                start, HUD, pause, game over, leaderboard
+  progression/       achievements and the reward system
+  leaderboard.js
+  migrate.js         carries the old best score over
+```
 
-### Run Locally
+## Develop
 
 ```bash
-# Install dependencies
 npm install
-
-# Start dev server
 npm run dev
-
-# Build for production
-npm run build
+npm test          # unit tests
+npm run e2e       # browser tests at phone and desktop sizes
+npm run build     # static site in dist/
 ```
 
-## 🎯 How to Play
-
-- **Press ENTER** or **TAP the screen** to make Dopa-Dopa jump
-- Avoid obstacles (rocks, barns, fences)
-- Survive as long as possible to get a high score
-- The game gets progressively harder!
-
-## 🛠️ Built With
-
-- **[DopamineJS](https://www.npmjs.com/package/dopaminejs)** v2.0.0 - Core game engine
-- **[dopaminejs-plugins](https://www.npmjs.com/package/dopaminejs-plugins)** v1.0.0 - WebGL particles & more
-- **[dopaminejs-themes](https://www.npmjs.com/package/dopaminejs-themes)** v1.0.0 - Retro theme
-- **[Vite](https://vitejs.dev/)** - Build tool
-
-## 📁 Project Structure
-
-```
-dopa-dopa/
-├── src/
-│   ├── main.js              # Game initialization
-│   └── components/
-│       ├── Player.js        # Chicken character
-│       ├── Obstacle.js      # Rocks, barns, fences
-│       ├── Background.js    # Scrolling background
-│       └── GameManager.js   # Obstacle spawning
-├── index.html               # Game UI
-├── package.json
-└── README.md
-```
-
-## 🎨 Features Showcase
-
-### DopamineJS Core
-- Component-based game objects
-- Scene management
-- Game loop with fixed timestep
-- Rendering system
-
-### WebGL Particles
-- Jump effects (yellow sparkles)
-- Death explosion (orange particles)
-- Score celebration (green sparkles)
-
-### Theme Engine
-- Retro 8-bit aesthetic
-- Press Start 2P font
-- Pixel-perfect rendering
-
-## 🏆 High Score
-
-Your high score is saved locally in your browser!
-
-## 📝 License
-
-MIT License - feel free to use this as a template for your own games!
-
-## 🙏 Credits
-
-- Built by [BaryoDev](https://github.com/BaryoDev)
-- Powered by [DopamineJS](https://github.com/BaryoDev/dopaminejs)
-- Inspired by Flappy Bird
-
-## 🔗 Links
-
-- [DopamineJS Documentation](https://github.com/BaryoDev/dopaminejs)
-- [Plugin Development Guide](https://github.com/BaryoDev/dopaminejs/blob/main/docs/PLUGIN_GUIDE.md)
-- [Report Issues](https://github.com/BaryoDev/dopa-dopa/issues)
-
----
-
-**Have fun and good luck escaping the farmers!** 🐔💨
+MIT licence.
